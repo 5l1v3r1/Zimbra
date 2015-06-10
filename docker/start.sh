@@ -8,12 +8,17 @@ RANDOMHAM=$(date +%s|sha256sum|base64|head -c 10)
 RANDOMSPAM=$(date +%s|sha256sum|base64|head -c 10)
 RANDOMVIRUS=$(date +%s|sha256sum|base64|head -c 10)
 ## Installing the DNS Server ##
-echo "Installing DNS Server"
-sudo apt-get update && sudo sudo apt-get install -y bind9 bind9utils bind9-doc dnsutils
+echo "Installing DNSMASQ DNS Server"
+sudo apt-get update && sudo sudo apt-get install -y dnsmasq dnsutils
+## was originally a full "bind9" install
 echo "Configuring DNS Server"
+## START of TODO changes for DNSMASQ
+# TODO: fix settings below
 sed "s/-u/-4 -u/g" /etc/default/bind9 > /etc/default/bind9.new
 mv /etc/default/bind9.new /etc/default/bind9
 rm /etc/bind/named.conf.options
+#TODO: replace named.conf.options with "dnsmasq" equivalents
+# See: www.thekelleys.org.uk/dnsmasq/docs/dnsmasq.conf.example
 cat <<EOF >>/etc/bind/named.conf.options
 options {
 directory "/var/cache/bind";
@@ -58,6 +63,7 @@ imap4     IN      A      $CONTAINERIP
 smtp     IN      A      $CONTAINERIP
 EOF
 sudo service bind9 restart 
+## END OF TODO changes for DNSMASQ
 
 ##Install the Zimbra Collaboration OS dependencies and Zimbra package ##
 apt-get update
