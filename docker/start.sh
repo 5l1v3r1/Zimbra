@@ -11,58 +11,31 @@ RANDOMVIRUS=$(date +%s|sha256sum|base64|head -c 10)
 echo "Installing DNSMASQ DNS Server"
 sudo apt-get update && sudo sudo apt-get install -y dnsmasq dnsutils
 ## was originally a full "bind9" install
+
 echo "Configuring DNS Server"
-## START of TODO changes for DNSMASQ
-# TODO: fix settings below
-sed "s/-u/-4 -u/g" /etc/default/bind9 > /etc/default/bind9.new
-mv /etc/default/bind9.new /etc/default/bind9
-rm /etc/bind/named.conf.options
-#TODO: replace named.conf.options with "dnsmasq" equivalents
+## START of changes for DNSMASQ
 # See: www.thekelleys.org.uk/dnsmasq/docs/dnsmasq.conf.example
-cat <<EOF >>/etc/bind/named.conf.options
-options {
-directory "/var/cache/bind";
-
-listen-on { 127.0.0.1; }; # ns1 private IP address - listen on private network only
-allow-transfer { none; }; # disable zone transfers by default
-
-forwarders {
-8.8.8.8;
-8.8.4.4;
-};
-auth-nxdomain no; # conform to RFC1035
-#listen-on-v6 { any; };
-
-};
+cat <<EOF >>/etc/dnsmasq/dnsmasq.conf
+listen-address=$CONTAINERIP
+no-dhcp-interface=eth0
+no-poll
+address=/double-click.net/127.0.0.1
+# doubleclick to loopback is just for kicks
+domain=$DOMAIN
+mx-host=$DOMAIN,$HOSTNAME,50
+#mx-target=$HOSTNAME
+#localmx
+txt-record=$DOMAIN,"v=spf1 a -all"
+#for debugging
+log-queries
 EOF
-cat <<EOF >>/etc/bind/named.conf.local
-zone "$DOMAIN" {
-        type master;
-        file "/etc/bind/db.$DOMAIN";
-};
+
+cat <<EOF >>/etc/default/dnsmasq
+DOMAIN_SUFFIX=`$DOMAIN`
+ENABLED=1
 EOF
-touch /etc/bind/db.$DOMAIN
-cat <<EOF >/etc/bind/db.$DOMAIN
-\$TTL  604800
-@      IN      SOA    ns1.$DOMAIN. root.localhost. (
-                              2        ; Serial
-                        604800        ; Refresh
-                          86400        ; Retry
-                        2419200        ; Expire
-                        604800 )      ; Negative Cache TTL
-;
-@     IN      NS      ns1.$DOMAIN.
-@     IN      A      $CONTAINERIP
-@     IN      MX     10     $HOSTNAME.$DOMAIN.
-$HOSTNAME     IN      A      $CONTAINERIP
-ns1     IN      A      $CONTAINERIP
-mail     IN      A      $CONTAINERIP
-pop3     IN      A      $CONTAINERIP
-imap     IN      A      $CONTAINERIP
-imap4     IN      A      $CONTAINERIP
-smtp     IN      A      $CONTAINERIP
-EOF
-sudo service bind9 restart 
+
+sudo service dnsmasq restart 
 ## END OF TODO changes for DNSMASQ
 
 ##Install the Zimbra Collaboration OS dependencies and Zimbra package ##
