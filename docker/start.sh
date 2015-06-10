@@ -42,7 +42,7 @@ sudo service dnsmasq restart
 apt-get update
 echo "Download and install Zimbra Collaboration dependencies"
 sudo apt-get install -y netcat-openbsd sudo libidn11 libpcre3 libgmp10 libexpat1 libstdc++6 libperl5.18 libaio1 resolvconf unzip pax sysstat sqlite3
-
+## https://wiki.zimbra.com/wiki/Install_Zimbra_Collaboration_and_a_DNS_Server_with_Script
 ## Building and adding the Scripts keystrokes and the config.defaults
 touch /tmp/zcs/installZimbra-keystrokes
 cat <<EOF >/tmp/zcs/installZimbra-keystrokes
